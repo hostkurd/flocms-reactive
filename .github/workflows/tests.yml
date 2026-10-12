@@ -27,7 +27,7 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
-          extensions: mbstring, pdo_sqlite, json
+          extensions: mbstring, pdo_sqlite, json, zip
           coverage: none
       - run: composer validate --strict --no-check-lock
       - run: php scripts/use-core-checkout.php .ci/core
@@ -36,6 +36,8 @@ jobs:
           COMPOSER: composer.local.json
       - run: find src tests examples bootstrap.php scripts -name '*.php' -print0 | xargs -0 -n1 php -l > /dev/null
       - run: vendor/bin/phpunit
+      - run: composer archive --format=zip --dir=/tmp --file=flocms-reactive-distribution
+      - run: php scripts/check-distribution.php /tmp/flocms-reactive-distribution.zip
 
   browser:
     runs-on: ubuntu-latest
