@@ -15,7 +15,6 @@ final class Kernel
         self::validKey($key);
         $this->guard($admin);
         $component = $this->registry->create($name);
-        $component->authorize($request);
         $schema = new StateSchema($component);
         $values = $schema->values();
         if (array_diff_key($initial, $values) !== []) { throw new \LogicException('Initial state must be explicitly declared.'); }

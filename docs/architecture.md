@@ -5,7 +5,7 @@ registration, state validation, signed context, the update endpoint, and browser
 lifecycle. Admin will own component schemas and visual styling above Reactive.
 Neither Core nor the skeleton requires Reactive or Admin.
 
-Initial render: registered alias → authorize → initialize trusted state/mount →
+Initial render: registered alias → initialize trusted state → authorize → mount →
 query state → authorize → render body and signed wrapper.
 
 Update: method/size/CSRF → verify signed session/context → refresh authentication →

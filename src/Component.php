@@ -10,7 +10,7 @@ abstract class Component
     /** @var array<string, string> */
     protected array $errors = [];
 
-    /** Called before rendering, before and after restoring state, and before actions. */
+    /** Called with current state, before mounting/rendering and around actions. */
     public function authorize(Request $request): void {}
 
     /** Initial request only. Never rely on this hook for update authorization. */

@@ -26,6 +26,14 @@ final class RequiredCounter extends Counter
 {
     public function validate(): array { return $this->count === 4 ? ['count' => 'Four is not allowed.'] : []; }
 }
+final class ScopedCounter extends Counter
+{
+    public function authorize(Request $request): void
+    {
+        parent::authorize($request);
+        if ($this->recordId !== 20) { throw new HttpException(403); }
+    }
+}
 
 final class KernelTest extends TestCase
 {
@@ -79,6 +87,13 @@ final class KernelTest extends TestCase
         $data = $this->signer->verify($this->snapshot($html), Csrf::token());
         self::assertSame(['count' => 2, 'recordId' => 7], $data['state']);
         self::assertStringNotContainsString('must-never-leave-the-server', $html);
+    }
+
+    public function testInitialAuthorizationUsesTrustedRecordContextBeforeMounting(): void
+    {
+        $this->registry->register('scoped', ScopedCounter::class);
+        self::assertStringContainsString('data-rx-component="scoped"', $this->mounted('scoped', initial: ['recordId' => 20]));
+        $this->fails(403, fn () => $this->mounted('scoped', initial: ['recordId' => 21]));
     }
 
     public function testValidUpdateAndExplicitAction(): void
