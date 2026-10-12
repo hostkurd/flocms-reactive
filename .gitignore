@@ -4,6 +4,7 @@
 /.phpunit.cache/
 /test-results/
 /playwright-report/
+/examples/products/site/views/cache/
 /.ci/
 /composer.local.json
 /composer.local.lock

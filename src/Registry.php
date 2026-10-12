@@ -11,9 +11,11 @@ final class Registry
 
     public function register(string $name, string $class): void
     {
+        $reflection = class_exists($class) ? new ReflectionClass($class) : null;
         if (preg_match('/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/D', $name) !== 1
             || !is_subclass_of($class, Component::class)
-            || !(new ReflectionClass($class))->isInstantiable()) {
+            || !$reflection?->isInstantiable()
+            || ($reflection->getConstructor()?->getNumberOfRequiredParameters() ?? 0) > 0) {
             throw new InvalidArgumentException('Register a valid component name and instantiable Component class.');
         }
         if (isset($this->components[$name]) && $this->components[$name] !== $class) {

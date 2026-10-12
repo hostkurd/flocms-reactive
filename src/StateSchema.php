@@ -61,7 +61,8 @@ final class StateSchema
             throw new \FloCMS\Core\HttpException(409, 'Component schema changed. Reload the page.');
         }
         foreach ($values as $name => $value) {
-            $converted = $this->convert($this->fields[$name]['type'], $value);
+            try { $converted = $this->convert($this->fields[$name]['type'], $value); }
+            catch (\InvalidArgumentException) { throw new \FloCMS\Core\HttpException(409, 'Component schema changed. Reload the page.'); }
             $this->fields[$name]['property']->setValue($this->component, $converted);
         }
     }

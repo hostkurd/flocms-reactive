@@ -204,6 +204,21 @@ final class KernelTest extends TestCase
         $this->registry->register('counter', RequiredCounter::class);
     }
 
+    public function testRegistryRequiresAZeroArgumentConstructor(): void
+    {
+        $component = new class('initial') extends Component {
+            public function __construct(string $argument) {}
+            public function render(): string { return ''; }
+        };
+        $this->expectException(\InvalidArgumentException::class);
+        $this->registry->register('invalid', $component::class);
+    }
+
+    public function testOldSnapshotWithChangedStateTypeReturns409(): void
+    {
+        $this->fails(409, fn () => (new StateSchema(new Counter()))->restore(['count' => 'old-string-type', 'recordId' => 7]));
+    }
+
     public function testStateSupportsBooleanAndFloatWithoutLooseCoercion(): void
     {
         $component = new class extends Component {
