@@ -1,0 +1,29 @@
+<form data-rx-submit="refresh">
+    <label>{{ $labels['search'] }}
+        <input type="search" value="{{ $search }}" data-rx-bind="search" data-rx-reset="page:1" maxlength="100" aria-label="{{ $labels['search'] }}">
+    </label>
+    <button type="submit">{{ $labels['search'] }}</button>
+    <button type="button" data-rx-action="clear">{{ $labels['clear'] }}</button>
+    <span data-rx-loading>{{ $labels['loading'] }}</span>
+</form>
+@if(isset($errors['search']))
+<p role="alert">{{ $errors['search'] }}</p>
+@endif
+<p data-total>{{ $total }} {{ $labels['products'] }}</p>
+@if(count($products) > 0)
+<table>
+    <thead><tr><th scope="col">{{ $labels['name'] }}</th><th scope="col">{{ $labels['price'] }}</th></tr></thead>
+    <tbody>
+    @foreach($products as $product)
+    <tr><td>{{ $product->name }}</td><td>{{ number_format((float) $product->price, 2) }}</td></tr>
+    @endforeach
+    </tbody>
+</table>
+@else
+<p data-empty>{{ $labels['empty'] }}</p>
+@endif
+<nav aria-label="{{ $labels['pagination'] }}">
+    <button type="button" data-rx-action="goToPage" data-rx-set="page" data-rx-value="{{ max(1, $page - 1) }}" @if($page <= 1) disabled @endif>{{ $labels['previous'] }}</button>
+    <span data-page>{{ $page }} / {{ $last }}</span>
+    <button type="button" data-rx-action="goToPage" data-rx-set="page" data-rx-value="{{ $page + 1 }}" @if($page >= $last) disabled @endif>{{ $labels['next'] }}</button>
+</nav>

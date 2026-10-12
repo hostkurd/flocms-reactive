@@ -1,0 +1,5 @@
+[data-rx-component][aria-busy="true"] [data-rx-loading]{display:inline-block}
+[data-rx-loading]{display:none}
+[data-rx-component] .rx-status:empty{display:none}
+[data-rx-component] .rx-status{margin-block:1rem;color:#9c2424}
+[data-rx-component] [data-rx-action]:disabled{cursor:wait;opacity:.6}
