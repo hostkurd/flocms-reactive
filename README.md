@@ -32,10 +32,11 @@ uses an in-memory SQLite catalog and a demo session. It is not a production
 authentication implementation. Do not deploy its router or fixed signing key.
 The executable example is included in a Git checkout, not the Composer archive.
 
-After the stable packages are released:
+After the stable packages are released, install into a FloCMS application.
+FloCMS 1.8.1 pins Core 2.3.1, so update that root requirement explicitly:
 
 ```sh
-composer require hostkurd/flocms-reactive
+composer require hostkurd/flocms-core:2.3.2 hostkurd/flocms-reactive -W
 ```
 
 ## Define a component
