@@ -51,10 +51,11 @@ final class DemoController extends \FloCMS\Core\Controller
     {
         $language = App::getRouter()->getLanguage();
         $dir = in_array($language, ['ku', 'ar'], true) ? 'rtl' : 'ltr';
+        $labels = require __DIR__ . '/lang/' . $language . '.php';
         $body = '<!doctype html><html lang="' . $language . '" dir="' . $dir . '"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width">'
             . '<title>FloCMS Reactive — Products</title>' . Reactive::assets() . '<link rel="stylesheet" href="/demo/style"></head><body>'
             . '<h1>FloCMS Reactive</h1><p>Products · بەرهەم · المنتجات</p><nav><a href="/en/demo">English</a> · <a href="/ku/demo">کوردی</a> · <a href="/ar/demo">العربية</a></nav>'
-            . '<h2>Catalog</h2>' . Reactive::mount('products', 'catalog') . '<h2>Featured</h2>' . Reactive::mount('products', 'featured', ['featuredOnly' => true])
+            . '<h2>' . $labels['catalog'] . '</h2>' . Reactive::mount('products', 'catalog') . '<h2>' . $labels['featured'] . '</h2>' . Reactive::mount('products', 'featured', ['featuredOnly' => true])
             . '</body></html>';
         return Response::html($body)->header('Cache-Control', 'no-store');
     }

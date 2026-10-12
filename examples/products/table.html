@@ -24,6 +24,6 @@
 @endif
 <nav aria-label="{{ $labels['pagination'] }}">
     <button type="button" data-rx-action="goToPage" data-rx-set="page" data-rx-value="{{ max(1, $page - 1) }}" @if($page <= 1) disabled @endif>{{ $labels['previous'] }}</button>
-    <span data-page>{{ $page }} / {{ $last }}</span>
+    <span data-page dir="ltr">{{ $page }} / {{ $last }}</span>
     <button type="button" data-rx-action="goToPage" data-rx-set="page" data-rx-value="{{ $page + 1 }}" @if($page >= $last) disabled @endif>{{ $labels['next'] }}</button>
 </nav>
