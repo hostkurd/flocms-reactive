@@ -1,0 +1,34 @@
+{
+  "name": "@hostkurd/flocms-reactive",
+  "version": "0.1.0",
+  "description": "Build assets for the optional FloCMS reactive PHP component package",
+  "scripts": {
+    "build": "vite build",
+    "typecheck": "tsc --noEmit",
+    "test:browser": "playwright test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hostkurd/flocms-reactive.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/hostkurd/flocms-reactive/issues"
+  },
+  "homepage": "https://github.com/hostkurd/flocms-reactive#readme",
+  "dependencies": {
+    "@alpinejs/csp": "3.17.4",
+    "@alpinejs/morph": "3.17.4",
+    "htmx.org": "2.0.11"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.64.0",
+    "@types/node": "26.6.5",
+    "typescript": "7.0.2",
+    "vite": "8.3.4"
+  },
+  "private": true
+}
