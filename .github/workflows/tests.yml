@@ -17,23 +17,13 @@ jobs:
         php: ['8.1', '8.2', '8.3', '8.4']
     steps:
       - uses: actions/checkout@v4
-      # Explicit immutable checkout while Core 2.3.2 is awaiting release.
-      # Remove this bridge once Composer can resolve the stable minimum.
-      - uses: actions/checkout@v4
-        with:
-          repository: hostkurd/flocms-core
-          ref: d4df0602fa8fb2401bcc72b5330bf2556c583f13
-          path: .ci/core
       - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
           extensions: mbstring, pdo_sqlite, json, zip
           coverage: none
       - run: composer validate --strict --no-check-lock
-      - run: php scripts/use-core-checkout.php .ci/core
       - run: composer install --no-interaction --no-progress --prefer-dist
-        env:
-          COMPOSER: composer.local.json
       - run: find src tests examples bootstrap.php scripts -name '*.php' -print0 | xargs -0 -n1 php -l > /dev/null
       - run: vendor/bin/phpunit
       - run: composer archive --format=zip --dir=/tmp --file=flocms-reactive-distribution
@@ -43,20 +33,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/checkout@v4
-        with:
-          repository: hostkurd/flocms-core
-          ref: d4df0602fa8fb2401bcc72b5330bf2556c583f13
-          path: .ci/core
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
           extensions: mbstring, pdo_sqlite, json
           coverage: none
-      - run: php scripts/use-core-checkout.php .ci/core
       - run: composer install --no-interaction --no-progress --prefer-dist
-        env:
-          COMPOSER: composer.local.json
       - uses: actions/setup-node@v4
         with:
           node-version: '24'

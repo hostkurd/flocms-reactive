@@ -125,6 +125,23 @@ final class KernelTest extends TestCase
         self::assertStringContainsString('<p data-count>4</p>', $response->body());
     }
 
+    #[\PHPUnit\Framework\Attributes\RunInSeparateProcess]
+    #[\PHPUnit\Framework\Attributes\PreserveGlobalState(false)]
+    public function testActionCanThrowValidationWithoutPreviouslyLoadingCoreValidator(): void
+    {
+        $component = new class extends Component {
+            #[State]
+            public string $name = 'Draft';
+            #[Action]
+            public function save(): void { throw new \FloCMS\Core\ValidationException(['name'=>['Required.', 'Try again.']]); }
+            public function render(): string { return $this->name . ' ' . ($this->errors['name'] ?? ''); }
+        };
+        $this->registry->register('draft', $component::class);
+        $response = $this->update(['_action'=>'save'], $this->mounted('draft'));
+        self::assertSame(422, $response->status());
+        self::assertStringContainsString('Draft Required. Try again.', $response->body());
+    }
+
     public function testLockedAndUnknownPropertiesAreRejected(): void
     {
         foreach (['recordId', 'role', 'secret'] as $property) {

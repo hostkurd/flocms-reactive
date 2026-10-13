@@ -43,7 +43,7 @@ function status(state: Runtime, text: string): void {
 
 function loading(state: Runtime, busy: boolean): void {
   state.root.setAttribute('aria-busy', String(busy));
-  state.root.querySelectorAll<HTMLButtonElement>('[data-rx-action]').forEach(button => {
+  state.root.querySelectorAll<HTMLButtonElement>('[data-rx-action], form[data-rx-submit] button[type="submit"], form[data-rx-submit] button:not([type])').forEach(button => {
     if (busy) {
       button.dataset.rxWasDisabled = String(button.disabled);
       button.disabled = true;
@@ -96,7 +96,15 @@ document.addEventListener('input', event => {
   const reset = input.dataset.rxReset;
   if (reset) {
     const [name, value] = reset.split(':', 2);
-    if (name in state.values) state.values[name] = value;
+    if (name in state.values) {
+      state.values[name] = value;
+      state.root.querySelectorAll<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>('[data-rx-bind]').forEach(control => {
+        if (control.dataset.rxBind === name) {
+          if (control instanceof HTMLInputElement && control.type === 'checkbox') control.checked = value === '1';
+          else control.value = value;
+        }
+      });
+    }
   }
   schedule(state);
 });
@@ -119,6 +127,14 @@ document.addEventListener('submit', event => {
   const state = runtime(event.target);
   if (!state || state.busy) { event.preventDefault(); return; }
   event.preventDefault();
+  // Read the submitted controls too: autofill and programmatic value changes
+  // need not emit an input event. Only registered writable bindings are sent.
+  event.target.querySelectorAll<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>('[data-rx-bind]').forEach(input => {
+    const key = input.dataset.rxBind!;
+    if (key in state.values) {
+      state.values[key] = input instanceof HTMLInputElement && input.type === 'checkbox' ? input.checked : input.value;
+    }
+  });
   schedule(state, event.target.dataset.rxSubmit || 'refresh', true);
 });
 

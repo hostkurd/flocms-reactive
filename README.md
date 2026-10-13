@@ -4,40 +4,47 @@ Optional reactive PHP components for FloCMS. Define state and actions in PHP;
 the browser receives server-rendered HTML updates without a full page refresh.
 Works on public websites and supplies a foundation for future Admin components.
 
-**Status: 0.1 prototype.** The first milestone is a searchable, paginated product
-table. Nested components, uploads, persistent component storage, and a complete
+**Status: 0.2 prototype in development.** Examples include a searchable, paginated
+product table and a dependent country/city form with transactional saving.
+Nested components, uploads, persistent component storage, and a complete
 Admin integration are not included yet. FloCMS Core and the skeleton remain
 usable without this package.
 
-## Requirements and release order
+## Requirements and installation
 
 - PHP 8.1+, JSON, mbstring, and FloCMS Core **2.3.2+**.
-- Core [PR #9](https://github.com/hostkurd/flocms-core/pull/9) adds generic explicit
-  controller responses; merge and release it as 2.3.2 before releasing Reactive.
 - A real application needs its normal session startup and `APP_KEY`.
 - End-user hosting needs PHP and Composer, not Node.js. Compiled assets ship in
   `dist/`; Node.js is used only to develop/rebuild the package's browser bundle.
 
-While Core 2.3.2 is awaiting release, develop against its checkout:
-
-```sh
-git clone -b feature/controller-responses https://github.com/hostkurd/flocms-core.git ../flocms-core
-php scripts/use-core-checkout.php ../flocms-core
-COMPOSER=composer.local.json composer install
-php -S 127.0.0.1:8080 examples/products/router.php
-```
-
-Open `/en/demo`, `/ku/demo`, or `/ar/demo`. The standalone development example
-uses an in-memory SQLite catalog and a demo session. It is not a production
-authentication implementation. Do not deploy its router or fixed signing key.
-The executable example is included in a Git checkout, not the Composer archive.
-
-After the stable packages are released, install into a FloCMS application.
-FloCMS 1.8.1 pins Core 2.3.1, so update that root requirement explicitly:
+Install into a FloCMS application. FloCMS 1.8.1 pins Core 2.3.1, so update
+that root requirement explicitly if your skeleton still uses it:
 
 ```sh
 composer require hostkurd/flocms-core:2.3.2 hostkurd/flocms-reactive -W
 ```
+
+If the root requirement is already Core 2.3.2+, `composer require
+hostkurd/flocms-reactive` is sufficient.
+
+## Run the examples
+
+From a Git checkout of this package:
+
+```sh
+composer install
+php -S 127.0.0.1:8080 examples/products/router.php
+```
+
+Open `/en/demo` for the tables or `/en/demo/form` for the country/city form.
+Both also support `/ku/` and `/ar/`. The demo uses SQLite files in
+`sys_get_temp_dir()/flocms-reactive-demo`, one per demo session, so an address
+survives a reload. Delete those files after testing. They are application records;
+Reactive itself still recreates components from signed snapshots on each request.
+
+The demo session is not production authentication. Do not deploy its router or
+fixed signing key. Executable examples are included in Git, not the Composer archive.
+See [the dependent form walkthrough](docs/dependent-forms.md).
 
 ## Define a component
 
@@ -137,20 +144,23 @@ language, including applications installed below a subdirectory.
 
 - `data-rx-bind`: update a declared writable property; input updates debounce 300ms.
 - `data-rx-reset="page:1"`: include a related state reset. Enforce the invariant in
-  PHP's `updated()` hook too; browser controls can be bypassed.
-- `data-rx-submit`: explicitly submit an action, defaulting to `refresh`.
+  PHP's `updated()` hook too; browser controls can be bypassed. Matching bound
+  controls are reset immediately, including dependent selects.
+- `data-rx-submit`: explicitly submit an action, defaulting to `refresh`. Submit
+  reads current bound control values, including autofill that emitted no input event.
+  Submit buttons are disabled during updates; existing disabled states are preserved.
 - `data-rx-action`: invoke a zero-argument method carrying `#[Action]`.
 - `data-rx-set` + `data-rx-value`: set a declared property before an action (pagination).
 - `data-rx-loading`: visible while the component request is running.
 
 `refresh` is reserved for rendering without calling a component method. Normal PHP
 methods, including lifecycle methods, are not exposed unless explicitly marked.
-Components are not nested in v0.1. Supply an ordinary form/page alternative when
+Components are not nested in this prototype. Supply an ordinary form/page alternative when
 the application needs operation without JavaScript.
 
 ## State, lifecycle, and validation
 
-Only initialized, public properties carrying `#[State]` are transmitted. v0.1
+Only initialized, public properties carrying `#[State]` are transmitted. This prototype
 supports non-null `string`, `int`, `float`, and `bool`; objects, models, arrays, and
 closures are excluded. `#[State(writable: false)]` seals server-provided context,
 such as a category ID. It still appears in the browser: never put secrets in state.
@@ -158,8 +168,12 @@ such as a category ID. It still appears in the browser: never put secrets in sta
 `mount()` runs initially; updates recreate the component from its signed state.
 `authorize()` runs for initial rendering and every update, including after writable
 changes and around actions. Read authorization decisions from current records and
-permissions, not from a previous mount. `updated()` handles state changes and must
-not write records or send external messages. `validate()` can return additional
+permissions, not from a previous mount. All valid submitted properties are applied
+before `updated()` runs, in property declaration order. Hooks see the complete
+accepted batch and their dependent resets are not overwritten by later client fields.
+Initial query-state restoration validates and applies values without calling
+`updated()`, preserving a bookmarked search/page combination.
+Hooks must not write records or send external messages. `validate()` can return additional
 field errors. The component's `errors()`/template `$errors` expose validation errors.
 
 `State::rules` uses Core Validator rules (`required`, `string`, `integer`, `numeric`,
@@ -167,6 +181,10 @@ field errors. The component's `errors()`/template `$errors` expose validation er
 For invalid type/rule input the last valid state is retained in this prototype.
 For database mutations, reload the record, authorize it, validate business input,
 and use a transaction inside the explicitly exposed action.
+An action may throw Core's `ValidationException`; Kernel renders its field errors
+with HTTP 422 and a fresh snapshot, retaining the accepted draft. Other exceptions
+still propagate. Validate before writing, or throw within a transaction so writes
+roll back. Action-only required checks let incomplete forms update without errors.
 
 ## Request and security contract
 
@@ -215,8 +233,8 @@ npm run test:browser
 ```
 
 Rebuild and commit `dist/` with browser-source changes. CI checks PHP 8.1–8.4,
-TypeScript, reproducible assets, and Chromium browser interactions. The immutable
-Core checkout in CI is a temporary bridge until 2.3.2 is released. Node 24 is used
+TypeScript, reproducible assets, and Chromium browser interactions. CI installs
+the released Core package from Packagist. Node 24 is used
 for the package build. See `docs/architecture.md` for boundaries and next milestones.
 
 ## License

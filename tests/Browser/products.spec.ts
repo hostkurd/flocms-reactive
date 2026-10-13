@@ -66,6 +66,17 @@ test('empty result and URL reload remain consistent', async ({ page }) => {
   await expect(catalog.locator('[data-page]')).toHaveText('1 / 1');
 });
 
+test('reload restores search and page together without triggering a search reset', async ({ page }) => {
+  await page.goto('/en/demo?catalog_q=o&catalog_page=2');
+  const catalog = page.locator('#rx-catalog');
+  await expect(catalog.getByRole('searchbox')).toHaveValue('o');
+  await expect(catalog.locator('[data-page]')).toHaveText('2 / 2');
+  await page.reload();
+  await expect(catalog.locator('[data-page]')).toHaveText('2 / 2');
+  await catalog.getByRole('searchbox').fill('Keyboard');
+  await expect(catalog.locator('[data-page]')).toHaveText('1 / 1');
+});
+
 test('Arabic and Kurdish direction and unicode searches work', async ({ page }) => {
   for (const [language, search] of [['ar', 'فیلا'], ['ku', 'ڕۆشنایی']]) {
     await page.goto(`/${language}/demo`);

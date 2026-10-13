@@ -1,0 +1,35 @@
+<form data-rx-submit="save" novalidate aria-label="{{ $labels['title'] }}">
+    <div class="form-field">
+        <label for="location-name">{{ $labels['name'] }}</label>
+        <input id="location-name" name="name" type="text" autocomplete="name" value="{{ $name }}" data-rx-bind="name" maxlength="100" required
+               aria-invalid="{{ isset($errors['name']) ? 'true' : 'false' }}" aria-describedby="location-name-error">
+        <p id="location-name-error" class="field-error" @if(isset($errors['name'])) role="alert" @endif>{{ $errors['name'] ?? '' }}</p>
+    </div>
+    <div class="form-field">
+        <label for="location-country">{{ $labels['country'] }}</label>
+        <select id="location-country" name="countryId" data-rx-bind="countryId" data-rx-reset="cityId:0" required
+                aria-invalid="{{ isset($errors['countryId']) ? 'true' : 'false' }}" aria-describedby="location-country-error">
+            <option value="0">{{ $labels['choose_country'] }}</option>
+            @foreach($countries as $country)
+            <option value="{{ $country->id }}" @if($countryId === (int) $country->id) selected @endif>{{ $labels['country_' . $country->id] }}</option>
+            @endforeach
+        </select>
+        <p id="location-country-error" class="field-error" @if(isset($errors['countryId'])) role="alert" @endif>{{ $errors['countryId'] ?? '' }}</p>
+    </div>
+    <div class="form-field">
+        <label for="location-city">{{ $labels['city'] }}</label>
+        <select id="location-city" name="cityId" data-rx-bind="cityId" required @if($countryId === 0 || count($cities) === 0) disabled @endif
+                aria-invalid="{{ isset($errors['cityId']) ? 'true' : 'false' }}" aria-describedby="location-city-help location-city-error">
+            <option value="0">{{ $labels['choose_city'] }}</option>
+            @foreach($cities as $city)
+            <option value="{{ $city->id }}" @if($cityId === (int) $city->id) selected @endif>{{ $labels['city_' . $city->id] }}</option>
+            @endforeach
+        </select>
+        <p id="location-city-help">@if($countryId === 0){{ $labels['country_first'] }}@elseif(count($cities) === 0){{ $labels['no_cities'] }}@else{{ $labels['city_help'] }}@endif</p>
+        <p id="location-city-error" class="field-error" @if(isset($errors['cityId'])) role="alert" @endif>{{ $errors['cityId'] ?? '' }}</p>
+    </div>
+    <button type="submit" @if(!$canSave) disabled @endif>{{ $labels['save'] }}</button>
+    <span data-rx-loading>{{ $labels['loading'] }}</span>
+    @if(!$canSave)<p>{{ $labels['read_only'] }}</p>@endif
+    @if($saved)<p data-saved role="status">{{ $labels['saved'] }}</p>@endif
+</form>
