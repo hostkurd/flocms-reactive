@@ -92,7 +92,7 @@ test('permission loss is enforced on the next component request', async ({ page 
   const token = await page.locator('#rx-catalog').getAttribute('data-rx-token');
   await page.request.post('/demo/permission', { form: { _token: token! } });
   await page.locator('#rx-catalog').getByRole('searchbox').fill('Laptop');
-  await expect(page.locator('#rx-catalog [data-rx-status]')).toContainText('permission');
+  await expect(page.locator('#rx-catalog > [data-rx-status]')).toContainText('permission');
   await expect(page.locator('#rx-catalog [data-page]')).toHaveText('1 / 3');
 });
 
@@ -101,7 +101,7 @@ test('expired session token displays a recoverable error', async ({ page }) => {
   const token = await page.locator('#rx-catalog').getAttribute('data-rx-token');
   await page.request.post('/demo/expire', { form: { _token: token! } });
   await page.locator('#rx-catalog').getByRole('searchbox').fill('Laptop');
-  await expect(page.locator('#rx-catalog [data-rx-status]')).toContainText('expired');
+  await expect(page.locator('#rx-catalog > [data-rx-status]')).toContainText('expired');
 });
 
 test('transport failure can be retried without replaying an action', async ({ page }) => {
@@ -109,7 +109,7 @@ test('transport failure can be retried without replaying an action', async ({ pa
   await page.route('**/flo-reactive/update', route => route.abort());
   const catalog = page.locator('#rx-catalog');
   await catalog.getByRole('searchbox').fill('Laptop');
-  await expect(catalog.locator('[data-rx-status]')).toContainText('failed');
+  await expect(catalog.locator(':scope > [data-rx-status]')).toContainText('failed');
   await page.unroute('**/flo-reactive/update');
   await catalog.getByRole('button', { name: 'Search products', exact: true }).click();
   await expect(catalog.locator('tbody tr')).toHaveCount(1);

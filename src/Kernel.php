@@ -44,6 +44,10 @@ final class Kernel
         $snapshot = $request->input('_snapshot');
         if (!is_string($snapshot)) { throw new HttpException(400); }
         $data = $this->signer->verify($snapshot, Csrf::token());
+        // Reject malformed metadata before any action can mutate records.
+        $query = $request->input('_query', '');
+        if (!is_string($query) || strlen($query) > 8192) { throw new HttpException(400); }
+        parse_str(ltrim($query, '?'), $parsedQuery);
         if (($data['version'] ?? null) !== 1 || !is_string($data['name'] ?? null) || !is_string($data['key'] ?? null)
             || !is_bool($data['admin'] ?? null) || !is_array($data['state'] ?? null) || !is_string($data['path'] ?? null)
             || !str_starts_with($data['path'], '/') || str_starts_with($data['path'], '//')
@@ -82,9 +86,6 @@ final class Kernel
             }
         }
         $component->authorize($request);
-        $query = $request->input('_query', '');
-        if (!is_string($query) || strlen($query) > 8192) { throw new HttpException(400); }
-        parse_str(ltrim($query, '?'), $parsedQuery);
         return Response::html($this->render($component, $schema, $data, $parsedQuery), $errors === [] ? 200 : 422)
             ->header('Cache-Control', 'no-store')->header('Vary', 'HX-Request');
     }
@@ -104,6 +105,7 @@ final class Kernel
         $attributes = ['id' => 'rx-' . $context['key'], 'data-rx-component' => $context['name'],
             'data-rx-snapshot' => $snapshot, 'data-rx-endpoint' => $this->endpoint,
             'data-rx-state' => json_encode($schema->values(true), JSON_THROW_ON_ERROR),
+            'data-rx-refresh' => json_encode($component->refreshTargets(), JSON_THROW_ON_ERROR),
             'data-rx-token' => Csrf::token(), 'data-rx-url' => $schema->url($context['path'], $context['key'], $query)];
         $html = '<section';
         foreach ($attributes as $name => $value) { $html .= ' ' . $name . '="' . htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '"'; }

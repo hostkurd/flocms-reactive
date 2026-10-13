@@ -151,7 +151,7 @@ final class KernelTest extends TestCase
 
     public function testUnexposedAndLifecycleMethodsCannotBeInvoked(): void
     {
-        foreach (['dangerous', 'hidden', 'render', 'mount', 'authorize', '__construct', 'missing'] as $method) {
+        foreach (['dangerous', 'hidden', 'render', 'mount', 'authorize', 'refreshTargets', '__construct', 'missing'] as $method) {
             $this->fails(404, fn () => $this->update(['_action' => $method]));
         }
     }

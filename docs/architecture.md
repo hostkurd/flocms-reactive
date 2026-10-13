@@ -8,10 +8,10 @@ Neither Core nor the skeleton requires Reactive or Admin.
 Initial render: registered alias → initialize trusted state → authorize → mount →
 query state → authorize → render body and signed wrapper.
 
-Update: method/size/CSRF → verify signed session/context → refresh authentication →
+Update: method/size/CSRF → verify signed session/context and query metadata → refresh authentication →
 registered alias → restore snapshot → authorize → validate/apply writable changes →
 authorize → component validation → allowlisted action permission/execution →
-authorize → HTML and fresh signed wrapper.
+authorize → HTML, response-only refresh targets, and fresh signed wrapper.
 
 Accepted state is applied as a complete batch before changed-property hooks run
 in declaration order. Save actions may throw Core ValidationException to return
@@ -26,18 +26,25 @@ Per-component serialized requests prevent concurrent writes; sequence counters
 prevent display of obsolete responses. URL merging updates only that component's
 query keys. Browser history restoration currently uses a full reload.
 
-The examples include a ProductTable and a dependent LocationForm. The form uses
+The examples include a ProductTable with an edit modal and a dependent LocationForm. The form uses
 the authenticated owner identity, reloads lookups and saves inside a transaction,
 and keeps incomplete drafts separate from required-on-save validation. No form
 schema or nested state API is introduced yet. Runtime contracts are proven with
 regressions for tampering, typed/locked state, action permissions, revoked access,
 expired sessions, multiple tables, slow responses, focus, strict CSP, and RTL.
 
+The dialog adapter uses native dialog modality, preserves its open state through
+morphing, wraps Tab focus, and closes locally before an explicit server discard
+request. Save actions own transactions and optimistic record/version checks.
+Successful mutation effects refresh other independent instances through their own
+normal authorized endpoints; effects never become persistent snapshot state.
+Server-side ownership/scope and version checks remain necessary across browsers.
+
 Next milestones:
 
-1. Edit modal: record reload/authorization, transaction handling, focus restoration,
-   and action results/notifications.
-2. Integrate one Admin table and one Admin form; keep Core/Admin optionality tests.
+1. Resolve the outstanding Admin correctness findings, then integrate one Admin
+   table and one Admin form; keep Core/Admin optionality tests.
+2. Expand shared Actions, Forms, Tables and notification contracts from those integrations.
 3. Evaluate typed nested form state, nested components, temporary uploads, durable component state, richer
    response effects, and navigation after the initial contracts are proven.
 
