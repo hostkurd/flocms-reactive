@@ -3,3 +3,6 @@
 [data-rx-component] .rx-status:empty{display:none}
 [data-rx-component] .rx-status{margin-block:1rem;color:#9c2424}
 [data-rx-component] [data-rx-action]:disabled{cursor:wait;opacity:.6}
+dialog[data-rx-dialog]{max-inline-size:calc(100vw - 2rem);max-block-size:calc(100dvh - 2rem);inline-size:30rem;box-sizing:border-box;border:1px solid #d8dee8;border-radius:12px;padding:1.5rem;color:inherit;background:#fff;overscroll-behavior:contain}
+dialog[data-rx-dialog]::backdrop{background:rgb(15 23 42 / .55)}
+html:has(dialog[data-rx-dialog][open]){overflow:hidden}

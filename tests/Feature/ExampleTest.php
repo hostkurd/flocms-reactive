@@ -21,8 +21,8 @@ final class ExampleTest extends TestCase
         $_SESSION = ['role' => 1, 'isloggedin' => true, '_csrf_token' => 'tok'];
         Config::set('permissions', [1 => ['catalog.view']]);
         App::$db = new Database(new \PDO('sqlite::memory:'));
-        App::$db->query('CREATE TABLE products (id INTEGER PRIMARY KEY, name TEXT, price NUMERIC, featured INTEGER)');
-        for ($i = 1; $i <= 12; $i++) { App::$db->table('products')->insert(['id'=>$i,'name'=>'Product '.$i,'price'=>$i,'featured'=>$i % 2]); }
+        (require dirname(__DIR__, 2) . '/examples/products/schema.php')(App::$db);
+        for ($i = 1; $i <= 12; $i++) { App::$db->table('products')->insert(['id'=>$i,'name'=>'Product '.$i,'price_cents'=>$i * 100,'featured'=>$i % 2,'owner_id'=>1]); }
         $registry = new Registry();
         $registry->register('products', \FloCMS\Reactive\Examples\ProductTable::class);
         $kernel = new Kernel($registry, new Snapshot(str_repeat('k',32)), '/flo-reactive/update');

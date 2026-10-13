@@ -4,8 +4,8 @@ Optional reactive PHP components for FloCMS. Define state and actions in PHP;
 the browser receives server-rendered HTML updates without a full page refresh.
 Works on public websites and supplies a foundation for future Admin components.
 
-**Status: 0.2 prototype in development.** Examples include a searchable, paginated
-product table and a dependent country/city form with transactional saving.
+**Status: 0.3 prototype in development.** Examples include a searchable, paginated
+product table with an edit modal and a dependent country/city form with transactional saving.
 Nested components, uploads, persistent component storage, and a complete
 Admin integration are not included yet. FloCMS Core and the skeleton remain
 usable without this package.
@@ -38,13 +38,15 @@ php -S 127.0.0.1:8080 examples/products/router.php
 
 Open `/en/demo` for the tables or `/en/demo/form` for the country/city form.
 Both also support `/ku/` and `/ar/`. The demo uses SQLite files in
-`sys_get_temp_dir()/flocms-reactive-demo`, one per demo session, so an address
-survives a reload. Delete those files after testing. They are application records;
+`sys_get_temp_dir()/flocms-reactive-demo-v0.3`, one per demo session, so saved
+addresses and product edits survive a reload. This versioned directory starts fresh
+rather than migrating old example databases. Delete those files after testing. They are application records;
 Reactive itself still recreates components from signed snapshots on each request.
 
 The demo session is not production authentication. Do not deploy its router or
 fixed signing key. Executable examples are included in Git, not the Composer archive.
 See [the dependent form walkthrough](docs/dependent-forms.md).
+Use Edit in either product table for [the edit-modal walkthrough](docs/edit-modals.md).
 
 ## Define a component
 
@@ -124,8 +126,8 @@ those keys (`catalog_q`, `catalog_page`), so multiple components do not overwrit
 each other's state. Refreshing a URL restores its component query state. Back and
 forward navigation reloads the page in this prototype.
 
-Assets use the package's full release version (`reactive-v0.2.0.js` and
-`reactive-v0.2.0.css`) and immutable cache headers. The build reads the version
+Assets use the package's full release version (`reactive-v0.3.0.js` and
+`reactive-v0.3.0.css`) and immutable cache headers. The build reads the version
 from `package.json`; the manifest and `Reactive::assets()` select the filenames
 automatically. Every released asset change needs a new package version so browsers
 download the update. Do not replace published files under an existing version.
@@ -157,6 +159,11 @@ language, including applications installed below a subdirectory.
 - `data-rx-action`: invoke a zero-argument method carrying `#[Action]`.
 - `data-rx-set` + `data-rx-value`: set a declared property before an action (pagination).
 - `data-rx-loading`: visible while the component request is running.
+- `data-rx-dialog`, `data-rx-open`, `data-rx-close`: manage a native `<dialog>`
+  with server-controlled opening and an explicit discard action.
+- `data-rx-dialog-trigger`: remember the triggering action button for focus return.
+- `data-rx-dialog-close`: cancel locally and request the server discard action.
+- `data-rx-focus-fallback`: focus target when a dialog's opener has disappeared.
 
 `refresh` is reserved for rendering without calling a component method. Normal PHP
 methods, including lifecycle methods, are not exposed unless explicitly marked.
@@ -191,6 +198,32 @@ with HTTP 422 and a fresh snapshot, retaining the accepted draft. Other exceptio
 still propagate. Validate before writing, or throw within a transaction so writes
 roll back. Action-only required checks let incomplete forms update without errors.
 
+After a successful commit, `$this->refreshComponents('catalog', 'featured')`
+requests refreshes of other mounted component keys. These are response-only effects,
+not snapshot state. Each target refresh uses its own snapshot and current authorization;
+the originating component already renders its new data. External JavaScript may call
+`window.FloReactive.refresh('catalog')` (returns false for an unknown key).
+
+## Edit modals
+
+The product example reloads and authorizes a selected record in an explicit `edit`
+action, then seals the active record ID and version in locked state. `save` validates
+the draft, reloads/rechecks ownership and scope inside a transaction, and updates
+only if the version still matches. Prices are decimal strings in drafts and integer
+cents in storage. Stale/replayed saves return a field-error response without overwriting
+newer records. Successful saves close the dialog and refresh both example tables.
+
+Native dialogs provide background inertness; the adapter preserves them through
+morph updates, wraps keyboard Tab focus, handles Escape, restores opener/fallback
+focus, and cleans up removed components. Include a status element inside the dialog
+so transport/authentication errors remain visible there. Mutation requests disable
+dialog-bound controls, submission and cancellation until the request settles.
+Cancellation closes locally and sends no draft updates, so failed cancellation
+cannot trap the user or persist their draft. The PHP discard action still needs
+view/session authorization and must not require valid business input or mutate records.
+
+See [docs/edit-modals.md](docs/edit-modals.md) for the complete contracts and example.
+
 ## Request and security contract
 
 Updates POST `_snapshot`, `_token`, optional `state[property]`, and `_action` to
@@ -224,6 +257,8 @@ Alpine before the Reactive bundle if it already owns Alpine initialization.
 
 Browser events: `flo-reactive:initialized`, `flo-reactive:before-update`,
 `flo-reactive:updated`, `flo-reactive:error`, and `flo-reactive:destroyed`.
+Dialogs also emit `flo-reactive:dialog-opened` and `flo-reactive:dialog-closed`
+with `detail.name` identifying the dialog within its owning component.
 Use them to integrate and clean up editors and other JavaScript widgets.
 
 ## Development and checks

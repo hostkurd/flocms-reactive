@@ -1,6 +1,6 @@
 <form data-rx-submit="refresh">
     <label>{{ $labels['search'] }}
-        <input type="search" value="{{ $search }}" data-rx-bind="search" data-rx-reset="page:1" maxlength="100" aria-label="{{ $labels['search'] }}">
+        <input id="{{ $prefix }}-search" type="search" value="{{ $search }}" data-rx-bind="search" data-rx-reset="page:1" data-rx-focus-fallback maxlength="100" aria-label="{{ $labels['search'] }}">
     </label>
     <button type="submit">{{ $labels['search'] }}</button>
     <button type="button" data-rx-action="clear">{{ $labels['clear'] }}</button>
@@ -10,15 +10,22 @@
 <p role="alert">{{ $errors['search'] }}</p>
 @endif
 <p data-total>{{ $total }} {{ $labels['products'] }}</p>
+@if($notice !== '')<p data-notice role="status">{{ $notice }}</p>@endif
+@if(!$editorOpen && isset($errors['_form']))<p role="alert">{{ $errors['_form'] }}</p>@endif
 @if(count($products) > 0)
+<div class="table-scroll">
 <table>
-    <thead><tr><th scope="col">{{ $labels['name'] }}</th><th scope="col">{{ $labels['price'] }}</th></tr></thead>
+    <thead><tr><th scope="col">{{ $labels['name'] }}</th><th scope="col">{{ $labels['price'] }}</th><th scope="col">{{ $labels['actions'] }}</th></tr></thead>
     <tbody>
     @foreach($products as $product)
-    <tr><td>{{ $product->name }}</td><td>{{ number_format((float) $product->price, 2) }}</td></tr>
+    <tr id="{{ $prefix }}-product-{{ $product->id }}"><td>{{ $product->name }}</td><td>{{ number_format((int) $product->price_cents / 100, 2) }}</td><td>
+        <button id="{{ $prefix }}-edit-{{ $product->id }}" type="button" data-rx-action="edit" data-rx-set="selectedId" data-rx-value="{{ $product->id }}" data-rx-dialog-trigger="editor"
+                @if(!$canEdit || (int) $product->owner_id !== $ownerId) disabled @endif aria-label="{{ $labels['edit'] }} {{ $product->name }}">{{ $labels['edit'] }}</button>
+    </td></tr>
     @endforeach
     </tbody>
 </table>
+</div>
 @else
 <p data-empty>{{ $labels['empty'] }}</p>
 @endif
@@ -27,3 +34,27 @@
     <span data-page dir="ltr">{{ $page }} / {{ $last }}</span>
     <button type="button" data-rx-action="goToPage" data-rx-set="page" data-rx-value="{{ $page + 1 }}" @if($page >= $last) disabled @endif>{{ $labels['next'] }}</button>
 </nav>
+<dialog id="{{ $prefix }}-editor" data-rx-dialog="editor" data-rx-open="{{ $editorOpen ? 'true' : 'false' }}" data-rx-close="cancel" aria-labelledby="{{ $prefix }}-editor-title">
+    <h2 id="{{ $prefix }}-editor-title">{{ $labels['edit_product'] }}</h2>
+    @if($editorOpen)
+    <form data-rx-submit="save" novalidate>
+        @if(isset($errors['_form']))<p role="alert" tabindex="-1" data-rx-error-summary>{{ $errors['_form'] }}</p>@endif
+        <div class="form-field">
+            <label for="{{ $prefix }}-edit-name">{{ $labels['name'] }}</label>
+            <input id="{{ $prefix }}-edit-name" type="text" data-rx-bind="editName" value="{{ $editName }}" maxlength="100" autofocus required
+                   aria-invalid="{{ isset($errors['editName']) ? 'true' : 'false' }}" aria-describedby="{{ $prefix }}-name-error">
+            <p id="{{ $prefix }}-name-error" class="field-error" @if(isset($errors['editName'])) role="alert" @endif>{{ $errors['editName'] ?? '' }}</p>
+        </div>
+        <div class="form-field">
+            <label for="{{ $prefix }}-edit-price">{{ $labels['price'] }}</label>
+            <input id="{{ $prefix }}-edit-price" type="text" inputmode="decimal" data-rx-bind="editPrice" value="{{ $editPrice }}" maxlength="9" dir="ltr" required
+                   aria-invalid="{{ isset($errors['editPrice']) ? 'true' : 'false' }}" aria-describedby="{{ $prefix }}-price-error">
+            <p id="{{ $prefix }}-price-error" class="field-error" @if(isset($errors['editPrice'])) role="alert" @endif>{{ $errors['editPrice'] ?? '' }}</p>
+        </div>
+        <button type="submit">{{ $labels['save'] }}</button>
+        <button type="button" data-rx-dialog-close="editor">{{ $labels['cancel'] }}</button>
+        <span data-rx-loading>{{ $labels['loading'] }}</span>
+    </form>
+    @endif
+    <p class="rx-status" data-rx-status role="status" aria-live="polite"></p>
+</dialog>

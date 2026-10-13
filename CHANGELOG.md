@@ -1,6 +1,20 @@
 # Changelog
 
-## 0.2.0 - Unreleased
+## 0.3.0 - Unreleased
+
+- Native dialog adapter with server-controlled opening, background inertness,
+  keyboard focus wrapping, Escape/discard handling, opener/fallback focus restoration,
+  validation focus, mutation locking, and cleanup when a component is removed.
+- Product edit modal with independent dialog IDs, localized/accessible errors,
+  transactional saves, current ownership/featured-scope checks, sealed record/version
+  context, integer-cent storage and optimistic concurrency protection.
+- Response-only component refresh effects and the `FloReactive.refresh(key)` browser
+  API. Product saves refresh both tables without resetting their search or pagination.
+- Request query metadata is validated before exposed actions can write records.
+- New PHP/browser regressions and an edit-modal walkthrough. Compiled assets use
+  `reactive-v0.3.0.js` and `reactive-v0.3.0.css`; Core/Admin need no changes.
+
+## 0.2.0 - 2026-10-13
 
 - Compiled assets use the package's full release version, for example
   `reactive-v0.2.0.js` and `reactive-v0.2.0.css`, instead of content hashes.
