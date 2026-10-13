@@ -16,7 +16,7 @@ abstract class Component
     /** Initial request only. Never rely on this hook for update authorization. */
     public function mount(): void {}
 
-    /** Runs after a valid writable property changes. Must not perform mutations. */
+    /** Runs in declaration order after the whole valid batch is applied. No database writes. */
     public function updated(string $property): void {}
 
     /** Non-field checks after state restoration; field => translated message. */

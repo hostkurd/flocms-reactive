@@ -66,6 +66,17 @@ test('empty result and URL reload remain consistent', async ({ page }) => {
   await expect(catalog.locator('[data-page]')).toHaveText('1 / 1');
 });
 
+test('reload restores search and page together without triggering a search reset', async ({ page }) => {
+  await page.goto('/en/demo?catalog_q=o&catalog_page=2');
+  const catalog = page.locator('#rx-catalog');
+  await expect(catalog.getByRole('searchbox')).toHaveValue('o');
+  await expect(catalog.locator('[data-page]')).toHaveText('2 / 2');
+  await page.reload();
+  await expect(catalog.locator('[data-page]')).toHaveText('2 / 2');
+  await catalog.getByRole('searchbox').fill('Keyboard');
+  await expect(catalog.locator('[data-page]')).toHaveText('1 / 1');
+});
+
 test('Arabic and Kurdish direction and unicode searches work', async ({ page }) => {
   for (const [language, search] of [['ar', 'فیلا'], ['ku', 'ڕۆشنایی']]) {
     await page.goto(`/${language}/demo`);
@@ -107,9 +118,17 @@ test('transport failure can be retried without replaying an action', async ({ pa
 test('compiled assets and update responses bypass the page layout', async ({ page }) => {
   await page.goto('/en/demo');
   const asset = await page.locator('script[src]').getAttribute('src');
+  const version = (await import('../../package.json', { with: { type: 'json' } })).default.version;
+  expect(asset).toBe(`/en/flo-reactive/asset/reactive-v${version}.js`);
+  const stylesheet = await page.locator('link[rel="stylesheet"]').first().getAttribute('href');
+  expect(stylesheet).toBe(`/en/flo-reactive/asset/reactive-v${version}.css`);
   const response = await page.request.get(asset!);
   expect(response.headers()['content-type']).toContain('javascript');
   expect(response.headers()['cache-control']).toContain('immutable');
+  const css = await page.request.get(stylesheet!);
+  expect(css.status()).toBe(200);
+  expect(css.headers()['content-type']).toContain('text/css');
+  expect(css.headers()['cache-control']).toContain('immutable');
   const data = await page.locator('#rx-catalog').evaluate(el => ({ snapshot: (el as HTMLElement).dataset.rxSnapshot!, token: (el as HTMLElement).dataset.rxToken! }));
   const update = await page.request.post('/en/flo-reactive/update', { form: { _snapshot: data.snapshot, _token: data.token } });
   expect(update.headers()['cache-control']).toBe('no-store');

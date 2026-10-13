@@ -68,7 +68,7 @@ final class StateSchema
     }
 
     /** Invalid changes are rejected before mutating any property. */
-    public function apply(array $updates): array
+    public function apply(array $updates, bool $notify = true): array
     {
         $converted = []; $errors = [];
         foreach ($updates as $name => $value) {
@@ -88,11 +88,17 @@ final class StateSchema
             }
         }
         if ($errors !== []) { return $errors; }
+        $changed = [];
         foreach ($converted as $name => $value) {
             if ($this->fields[$name]['property']->getValue($this->component) !== $value) {
                 $this->fields[$name]['property']->setValue($this->component, $value);
-                $this->component->updated($name);
+                $changed[$name] = true;
             }
+        }
+        // Hooks see the entire accepted batch. Run in declaration order so a
+        // dependent reset cannot be overwritten by later submitted properties.
+        foreach ($this->fields as $name => $field) {
+            if ($notify && isset($changed[$name])) { $this->component->updated($name); }
         }
         return [];
     }

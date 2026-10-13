@@ -37,5 +37,12 @@ final class ExampleTest extends TestCase
         self::assertStringNotContainsString('Product 11', $response->body());
         $featured = $kernel->mount('products','featured',['featuredOnly'=>true],$request);
         self::assertStringContainsString('6 products', $featured);
+        $restored = $kernel->mount('products', 'catalog', [], new Request(
+            ['catalog_q'=>'Product', 'catalog_page'=>'2'], [],
+            ['REQUEST_METHOD'=>'GET','REQUEST_URI'=>'/demo'], [], []
+        ));
+        self::assertStringContainsString('2 / 3', $restored);
+        self::assertStringContainsString('Product 6', $restored);
+        self::assertStringNotContainsString('<td>Product 1</td>', $restored);
     }
 }

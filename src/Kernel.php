@@ -2,13 +2,18 @@
 declare(strict_types=1);
 namespace FloCMS\Reactive;
 
-use FloCMS\Core\{Auth, Csrf, HttpException, Session};
+use FloCMS\Core\{Auth, Csrf, HttpException, Session, Validator, ValidationException};
 use FloCMS\Core\Http\{Request, Response};
 use FloCMS\Reactive\Attributes\Action;
 
 final class Kernel
 {
-    public function __construct(private readonly Registry $registry, private readonly Snapshot $signer, private readonly string $endpoint) {}
+    public function __construct(private readonly Registry $registry, private readonly Snapshot $signer, private readonly string $endpoint)
+    {
+        // Core 2.3.2 defines ValidationException in Validator.php. Load that
+        // declaration even for components without State validation rules.
+        if (!class_exists(ValidationException::class)) { class_exists(Validator::class); }
+    }
 
     public function mount(string $name, string $key, array $initial, Request $request, bool $admin = false): string
     {
@@ -21,7 +26,9 @@ final class Kernel
         $schema->restore(array_replace($values, $initial));
         $component->authorize($request);
         $component->mount();
-        $component->setErrors($schema->apply($schema->queryUpdates($key, $request->query())));
+        // URL restoration is initialization, not a live edit. Preserve the
+        // requested search/page pair instead of firing dependent reset hooks.
+        $component->setErrors($schema->apply($schema->queryUpdates($key, $request->query()), notify: false));
         $component->authorize($request);
         $context = ['version' => 1, 'name' => $name, 'key' => $key, 'admin' => $admin, 'path' => $request->path(),
             'language' => defined('ACTIVE_LANG') ? (string) ACTIVE_LANG : 'en'];
@@ -64,7 +71,15 @@ final class Kernel
             if ($attributes === [] || !$method->isPublic() || $method->isStatic() || $method->getNumberOfParameters() !== 0 || $method->isConstructor()) { throw new HttpException(404); }
             $permission = $attributes[0]->newInstance()->permission;
             if ($permission !== null) { Auth::authorize($permission); }
-            if ($errors === []) { $method->invoke($component); }
+            if ($errors === []) {
+                try { $method->invoke($component); }
+                catch (ValidationException $error) {
+                    foreach ($error->getErrors() as $field => $messages) {
+                        $errors[$field] = implode(' ', (array) $messages);
+                    }
+                    $component->setErrors($errors);
+                }
+            }
         }
         $component->authorize($request);
         $query = $request->input('_query', '');

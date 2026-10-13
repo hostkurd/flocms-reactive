@@ -21,7 +21,7 @@ final class ReactiveController extends Controller
     {
         if (!$this->request->isMethod('GET', 'HEAD')) { return Response::text('Method not allowed.', 405)->header('Allow', 'GET, HEAD'); }
         $name = $this->params[0] ?? '';
-        if (count($this->params) !== 1 || !is_string($name) || preg_match('/^reactive-[A-Za-z0-9_-]+\.(js|css)$/D', $name, $match) !== 1) { throw new HttpException(404); }
+        if (count($this->params) !== 1 || !is_string($name) || preg_match('/^reactive-v\d+\.\d+\.\d+\.(js|css)$/D', $name, $match) !== 1) { throw new HttpException(404); }
         $file = dirname(__DIR__, 2) . '/dist/' . $name;
         if (!is_file($file)) { throw new HttpException(404); }
         return Response::make((string) file_get_contents($file))
