@@ -2,6 +2,9 @@
 
 ## 0.2.0 - Unreleased
 
+- Compiled assets use the package's full release version, for example
+  `reactive-v0.2.0.js` and `reactive-v0.2.0.css`, instead of content hashes.
+  New released asset contents require a version bump to invalidate browser caches.
 - Dependent country/city form with incomplete drafts, localized and accessible
   field errors, empty-city state, transactional saving, reload persistence,
   owner-scoped records, and independently enforced view/save permissions.

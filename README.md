@@ -124,7 +124,12 @@ those keys (`catalog_q`, `catalog_page`), so multiple components do not overwrit
 each other's state. Refreshing a URL restores its component query state. Back and
 forward navigation reloads the page in this prototype.
 
-Assets use hashed filenames and immutable cache headers. The update endpoint uses
+Assets use the package's full release version (`reactive-v0.2.0.js` and
+`reactive-v0.2.0.css`) and immutable cache headers. The build reads the version
+from `package.json`; the manifest and `Reactive::assets()` select the filenames
+automatically. Every released asset change needs a new package version so browsers
+download the update. Do not replace published files under an existing version.
+The update endpoint uses
 `Cache-Control: no-store`. Endpoint and asset URLs honor `SITE_URI` and the active
 language, including applications installed below a subdirectory.
 
@@ -232,7 +237,8 @@ npx playwright install chromium
 npm run test:browser
 ```
 
-Rebuild and commit `dist/` with browser-source changes. CI checks PHP 8.1–8.4,
+For a new release, update the full version in `package.json` and `package-lock.json`,
+then rebuild and commit `dist/` with browser-source changes. CI checks PHP 8.1–8.4,
 TypeScript, reproducible assets, and Chromium browser interactions. CI installs
 the released Core package from Packagist. Node 24 is used
 for the package build. See `docs/architecture.md` for boundaries and next milestones.

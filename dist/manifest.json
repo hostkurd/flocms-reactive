@@ -1,12 +1,12 @@
 {
   "resources/js/reactive.ts": {
-    "file": "reactive-dRCRfkDi.js",
+    "file": "reactive-v0.2.0.js",
     "name": "reactive",
     "src": "resources/js/reactive.ts",
     "isEntry": true
   },
   "style.css": {
-    "file": "reactive-CTwWcf7u.css",
+    "file": "reactive-v0.2.0.css",
     "src": "style.css"
   }
 }
