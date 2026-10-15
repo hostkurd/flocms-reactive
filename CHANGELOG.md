@@ -1,6 +1,14 @@
 # Changelog
 
-## 0.3.0 - Unreleased
+## 0.4.0 - Unreleased
+
+- Opt-in `#[State(maxBytes: ...)]` for non-query scalar strings, up to 65,536 UTF-8 bytes. Existing properties retain their 8,192-byte default; limits apply to input, snapshot restoration and server output.
+- Larger request envelopes (up to 1 MiB) only for opted-in schemas. Other component requests retain their 64 KiB bound. Global signed snapshot JSON is bounded to 256 KiB.
+- Query state cannot opt into larger values; explicit state, permissions, session-bound signatures, CSRF and action allowlists remain unchanged. Nested/object state and uploads are not introduced.
+- Large Unicode/escaping, aggregate-limit and transport regressions plus a runnable bounded-draft example.
+- Release-version assets `reactive-v0.4.0.js` and `reactive-v0.4.0.css`. No Core or Admin dependency is introduced.
+
+## 0.3.0 - 2026-10-13
 
 - Native dialog adapter with server-controlled opening, background inertness,
   keyboard focus wrapping, Escape/discard handling, opener/fallback focus restoration,

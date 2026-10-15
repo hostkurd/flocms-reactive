@@ -38,7 +38,7 @@ final class Kernel
     public function update(Request $request): Response
     {
         if (!$request->isMethod('POST')) { return Response::text('Method not allowed.', 405)->header('Allow', 'POST'); }
-        if (strlen($request->rawBody()) > 65536) { throw new HttpException(413); }
+        if (strlen($request->rawBody()) > 1048576) { throw new HttpException(413); }
         $token = $request->input('_token') ?? $request->header('X-CSRF-TOKEN');
         if (!is_string($token) || !Csrf::validate($token)) { throw new HttpException(419); }
         $snapshot = $request->input('_snapshot');
@@ -58,6 +58,7 @@ final class Kernel
         $this->guard($data['admin']);
         $component = $this->registry->create($data['name']);
         $schema = new StateSchema($component);
+        if (strlen($request->rawBody()) > $schema->requestLimit()) { throw new HttpException(413); }
         $schema->restore($data['state']);
         $component->authorize($request);
         $updates = $request->input('state', []);

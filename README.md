@@ -281,3 +281,19 @@ for the package build. See `docs/architecture.md` for boundaries and next milest
 ## License
 
 MIT. Bundled third-party notices are in `THIRD_PARTY_NOTICES.md`.
+
+
+## Larger scalar drafts (0.4.0)
+
+Properties retain an 8,192 UTF-8 byte limit by default. A form component may explicitly declare a larger string:
+
+```php
+#[State(maxBytes: 65536)]
+public string $draft = '';
+```
+
+`maxBytes` must be 1–65,536. An override applies only to strings; query-bound properties cannot exceed 8,192 bytes. Input, server values and restored snapshots all enforce the declared byte limit. Existing scalar-only rules, writable flags, session/CSRF/signature checks and action authorization still apply. Signed state is readable by the browser and must never contain secrets.
+
+Only schemas opting into larger strings accept a larger HTTP envelope (up to 1 MiB); other schemas keep the 64 KiB request limit. Aggregate signed snapshot JSON is bounded at 256 KiB (the encoded token is capped at 350,000 bytes). JSON escaping and URL encoding count toward envelope limits, so allocate headroom when choosing your component's own draft budget. Configure the web server/PHP request-body limits accordingly. This does not introduce nested state, uploads or automatic write retries.
+
+Upgrade the Composer package and deploy the matching release-version assets. Reload open pages when changing a component's schema or limits; a restored value exceeding the new limit returns 409. Core remains `^2.3.2`, and standalone FloCMS does not depend on Reactive. The local example at `/en/demo/large` demonstrates a larger draft through the real browser transport.

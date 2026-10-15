@@ -7,6 +7,7 @@ $package = dirname(__DIR__, 2);
 require $package . '/vendor/autoload.php';
 require __DIR__ . '/ProductTable.php';
 require dirname(__DIR__) . '/forms/LocationForm.php';
+require dirname(__DIR__) . '/forms/LargeDraft.php';
 
 use FloCMS\Core\{App, Config, Csrf, Database, HttpException, Session};
 use FloCMS\Core\Http\Response;
@@ -42,6 +43,7 @@ if (!Session::get('demo_initialized')) {
 }
 Reactive::register('products', \FloCMS\Reactive\Examples\ProductTable::class);
 Reactive::register('location', \FloCMS\Reactive\Examples\LocationForm::class);
+Reactive::register('large-draft', \FloCMS\Reactive\Examples\LargeDraft::class);
 // A private temporary file per demo session makes saves survive HTTP requests.
 // Real applications use their configured database, migrations, and real login.
 $storage = sys_get_temp_dir() . '/flocms-reactive-demo-v0.3';
@@ -81,6 +83,10 @@ final class DemoController extends \FloCMS\Core\Controller
             . '<title>FloCMS Reactive — ' . $labels['title'] . '</title>' . Reactive::assets() . '<link rel="stylesheet" href="/demo/style"></head><body>'
             . '<h1>' . $labels['title'] . '</h1><nav><a href="/en/demo/form">English</a> · <a href="/ku/demo/form">کوردی</a> · <a href="/ar/demo/form">العربية</a></nav>'
             . Reactive::mount('location', 'address') . '<a href="/' . $language . '/demo">' . $labels['products_link'] . '</a></body></html>')->header('Cache-Control', 'no-store');
+    }
+    public function large(): Response
+    {
+        return Response::html('<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Large draft</title>' . Reactive::assets() . '</head><body>' . Reactive::mount('large-draft', 'large') . '</body></html>')->header('Cache-Control', 'no-store');
     }
     public function style(): Response
     {

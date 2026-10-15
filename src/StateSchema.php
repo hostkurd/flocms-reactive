@@ -29,6 +29,11 @@ final class StateSchema
                 throw new LogicException('State must be an initialized, public, non-null scalar: ' . $property->getName());
             }
             $config = $attributes[0]->newInstance();
+            if ($config->maxBytes < 1 || $config->maxBytes > 65536
+                || ($config->maxBytes !== 8192 && $type->getName() !== 'string')
+                || ($config->query !== null && $config->maxBytes > 8192)) {
+                throw new LogicException('State maxBytes must be 1–65536; larger values require a non-query string.');
+            }
             if ($config->query !== null) {
                 if (!$config->writable || preg_match('/^[a-z][a-z0-9_]{0,30}$/D', $config->query) !== 1 || isset($queries[$config->query])) {
                     throw new LogicException('Query aliases must be unique, valid, and writable.');
@@ -45,7 +50,7 @@ final class StateSchema
         foreach ($this->fields as $name => $field) {
             if (!$writableOnly || $field['config']->writable) {
                 $value = $field['property']->getValue($this->component);
-                if ((is_string($value) && strlen($value) > 8192) || (is_float($value) && !is_finite($value))) {
+                if ((is_string($value) && strlen($value) > $field['config']->maxBytes) || (is_float($value) && !is_finite($value))) {
                     throw new LogicException('Component state exceeds supported limits.');
                 }
                 $state[$name] = $value;
@@ -61,7 +66,7 @@ final class StateSchema
             throw new \FloCMS\Core\HttpException(409, 'Component schema changed. Reload the page.');
         }
         foreach ($values as $name => $value) {
-            try { $converted = $this->convert($this->fields[$name]['type'], $value); }
+            try { $converted = $this->convert($this->fields[$name]['type'], $value, $this->fields[$name]['config']->maxBytes); }
             catch (\InvalidArgumentException) { throw new \FloCMS\Core\HttpException(409, 'Component schema changed. Reload the page.'); }
             $this->fields[$name]['property']->setValue($this->component, $converted);
         }
@@ -77,7 +82,7 @@ final class StateSchema
                 throw new \FloCMS\Core\HttpException(400, 'Property is not writable.');
             }
             try {
-                $converted[$name] = $this->convert($field['type'], $value);
+                $converted[$name] = $this->convert($field['type'], $value, $field['config']->maxBytes);
                 if ($field['config']->rules !== '') {
                     Validator::validate([$name => $converted[$name]], [$name => $field['config']->rules]);
                 }
@@ -126,9 +131,16 @@ final class StateSchema
         return $path . ($query === [] ? '' : '?' . http_build_query($query, '', '&', PHP_QUERY_RFC3986));
     }
 
-    private function convert(string $type, mixed $value): string|int|float|bool
+    /** Larger request envelopes are available only to explicitly opted-in schemas. */
+    public function requestLimit(): int
     {
-        if (!is_scalar($value) || (is_string($value) && strlen($value) > 8192)) { throw new \InvalidArgumentException(); }
+        foreach ($this->fields as $field) { if ($field['config']->maxBytes > 8192) { return 1048576; } }
+        return 65536;
+    }
+
+    private function convert(string $type, mixed $value, int $maxBytes): string|int|float|bool
+    {
+        if (!is_scalar($value) || (is_string($value) && strlen($value) > $maxBytes)) { throw new \InvalidArgumentException(); }
         return match ($type) {
             'string' => is_string($value) ? $value : throw new \InvalidArgumentException(),
             'int' => is_int($value) ? $value : ((is_string($value) && preg_match('/^-?\d{1,19}$/D', $value) === 1 && filter_var($value, FILTER_VALIDATE_INT) !== false) ? (int) $value : throw new \InvalidArgumentException()),

@@ -214,7 +214,8 @@ final class KernelTest extends TestCase
     public function testGetRequestsAndOversizedPayloadsAreRejected(): void
     {
         self::assertSame(405, $this->kernel->update($this->request(method: 'GET'))->status());
-        $this->fails(413, fn () => $this->kernel->update($this->request(body: str_repeat('x', 65537))));
+        $this->fails(413, fn () => $this->kernel->update($this->request(body: str_repeat('x', 1048577))));
+        $this->fails(413, fn () => $this->kernel->update($this->request(['_snapshot' => $this->snapshot($this->mounted()), '_token' => Csrf::token()], body: str_repeat('x', 65537))));
     }
 
     public function testUnknownComponentsAreNotInstantiated(): void
