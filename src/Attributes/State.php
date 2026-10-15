@@ -8,6 +8,7 @@ final class State
     public function __construct(
         public readonly string $rules = '',
         public readonly ?string $query = null,
-        public readonly bool $writable = true
+        public readonly bool $writable = true,
+        public readonly int $maxBytes = 8192
     ) {}
 }
