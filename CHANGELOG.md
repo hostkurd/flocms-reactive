@@ -1,6 +1,14 @@
 # Changelog
 
-## 0.4.0 - Unreleased
+## 0.4.1 - 2026-10-16
+
+- Documentation only. The 0.4.0 entry now carries its release date, the README
+  status and asset examples match 0.4, and the larger-drafts section moved from
+  after the license into "State, lifecycle, and validation".
+- No PHP or browser changes. Browser assets stay `reactive-v0.4.0.js` and
+  `reactive-v0.4.0.css`; deployed assets do not need replacing.
+
+## 0.4.0 - 2026-10-15
 
 - Opt-in `#[State(maxBytes: ...)]` for non-query scalar strings, up to 65,536 UTF-8 bytes. Existing properties retain their 8,192-byte default; limits apply to input, snapshot restoration and server output.
 - Larger request envelopes (up to 1 MiB) only for opted-in schemas. Other component requests retain their 64 KiB bound. Global signed snapshot JSON is bounded to 256 KiB.

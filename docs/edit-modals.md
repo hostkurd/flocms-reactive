@@ -10,7 +10,7 @@ php -S 127.0.0.1:8080 examples/products/router.php
 Edit a product in either table. Change its name or price, submit, and see both
 tables refresh without a page reload. Cancel or Escape discards the draft. The
 example supports English/Kurdish/Arabic, RTL, field errors, deleted records,
-revoked access and optimistic conflicts. Compiled assets use `reactive-v0.3.0.*`.
+revoked access and optimistic conflicts. Compiled assets use the release version, for example `reactive-v0.4.0.*`.
 
 The implementation lives in `examples/products/ProductTable.php`, `table.html`,
 `schema.php` and `lang/`. The router uses a private SQLite file per demo session
