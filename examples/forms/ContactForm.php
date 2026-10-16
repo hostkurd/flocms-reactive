@@ -65,6 +65,8 @@ final class ContactForm extends Component
             . $field('email', 'Email', 'lazy', 'Lazy: sent when you leave the field after changing it.')
             . $field('city', 'City', 'blur', 'Blur: sent when focus leaves the field.')
             . $field('message', 'Message', 'defer', 'Deferred: sent only with Send or the next update.', true)
+            // A browser widget owning its DOM: kept across updates while its key stays the same.
+            . '<div data-widget data-rx-ignore="' . ($this->sent ? 'sent' : 'draft') . '"><p>Widget area</p></div>'
             . '<button type="submit">Send</button> <button type="button" data-rx-action="clear">Clear</button>'
             . ($this->sent ? '<p data-sent role="status">Message sent.</p>' : '')
             . '<dl data-server><dt>Server sees</dt><dd data-server-name>' . $e($this->name) . '</dd><dd data-server-topic>' . $e($this->topic) . '</dd>'
