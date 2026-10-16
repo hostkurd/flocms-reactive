@@ -49,7 +49,8 @@ validation must still verify the relationship against current database records.
 
 ## Draft validation and save validation
 
-`validate()` checks non-empty selections on every update. Incomplete drafts
+`validate()` checks non-empty selections on every update (the default; a component
+can return `false` from `validatesOnUpdate()` to check only before actions). Incomplete drafts
 are permitted. A forged city, unknown country, or removed lookup returns 422.
 The declared field rules still reject malformed scalar values before hooks run.
 

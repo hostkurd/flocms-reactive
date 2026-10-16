@@ -4,8 +4,9 @@ Optional reactive PHP components for FloCMS. Define state and actions in PHP;
 the browser receives server-rendered HTML updates without a full page refresh.
 Works on public websites and supplies a foundation for future Admin components.
 
-**Status: 0.4, pre-1.0.** The API may still change between minor versions. Examples include a searchable, paginated
-product table with an edit modal and a dependent country/city form with transactional saving.
+**Status: 0.5, pre-1.0.** The API may still change between minor versions. Examples include a searchable, paginated
+product table with an edit modal, a dependent country/city form with transactional saving,
+and a contact form showing the binding modes.
 Nested components, uploads, persistent component storage, and a complete
 Admin integration are not included yet. FloCMS Core and the skeleton remain
 usable without this package.
@@ -36,7 +37,8 @@ composer install
 php -S 127.0.0.1:8080 examples/products/router.php
 ```
 
-Open `/en/demo` for the tables or `/en/demo/form` for the country/city form.
+Open `/en/demo` for the tables, `/en/demo/form` for the country/city form or
+`/en/demo/contact` for the binding modes.
 Both also support `/ku/` and `/ar/`. The demo uses SQLite files in
 `sys_get_temp_dir()/flocms-reactive-demo-v0.3`, one per demo session, so saved
 addresses and product edits survive a reload. This versioned directory starts fresh
@@ -126,8 +128,8 @@ those keys (`catalog_q`, `catalog_page`), so multiple components do not overwrit
 each other's state. Refreshing a URL restores its component query state. Back and
 forward navigation reloads the page in this prototype.
 
-Assets use the package's full release version (for example `reactive-v0.4.0.js`
-and `reactive-v0.4.0.css`) and immutable cache headers. The build reads the version
+Assets use the package's full release version (for example `reactive-v0.5.0.js`
+and `reactive-v0.5.0.css`) and immutable cache headers. The build reads the version
 from `package.json`; the manifest and `Reactive::assets()` select the filenames
 automatically. Every released asset change needs a new package version so browsers
 download the update. Do not replace published files under an existing version.
@@ -149,13 +151,15 @@ language, including applications installed below a subdirectory.
 </form>
 ```
 
-- `data-rx-bind`: update a declared writable property; input updates debounce 300ms.
+- `data-rx-bind`: update a declared writable property; by default an update is sent
+  300 ms after typing stops. `data-rx-model` chooses another moment (below).
 - `data-rx-reset="page:1"`: include a related state reset. Enforce the invariant in
   PHP's `updated()` hook too; browser controls can be bypassed. Matching bound
   controls are reset immediately, including dependent selects.
 - `data-rx-submit`: explicitly submit an action, defaulting to `refresh`. Submit
   reads current bound control values, including autofill that emitted no input event.
-  Submit buttons are disabled during updates; existing disabled states are preserved.
+  Buttons are disabled while an action runs; existing disabled states are preserved.
+  A click during a plain update is queued and runs right after it, once.
 - `data-rx-action`: invoke a zero-argument method carrying `#[Action]`.
 - `data-rx-set` + `data-rx-value`: set a declared property before an action (pagination).
 - `data-rx-loading`: visible while the component request is running.
@@ -164,6 +168,23 @@ language, including applications installed below a subdirectory.
 - `data-rx-dialog-trigger`: remember the triggering action button for focus return.
 - `data-rx-dialog-close`: cancel locally and request the server discard action.
 - `data-rx-focus-fallback`: focus target when a dialog's opener has disappeared.
+
+### When a bound control is sent (0.5+)
+
+```html
+<input data-rx-bind="name">                                <!-- live: 300 ms after typing stops -->
+<input data-rx-bind="search" data-rx-model="debounce:600"> <!-- live, with another delay (0–10000 ms) -->
+<input data-rx-bind="email"  data-rx-model="lazy">         <!-- when the value is committed (change) -->
+<input data-rx-bind="city"   data-rx-model="blur">         <!-- when an edited control loses focus -->
+<textarea data-rx-bind="body" data-rx-model="defer"></textarea> <!-- only with the next request -->
+```
+
+Every mode keeps the browser's copy current, so an action (Save) always sends the
+latest values of all bound controls. Use `lazy`, `blur` or `defer` for long forms:
+each keystroke pause is otherwise a request, which matters on shared hosting.
+A deferred or lazy value that was typed while another update was running is kept
+as typed when that update's response arrives; the server copy catches up with the
+next request. Run the example at `/en/demo/contact`.
 
 `refresh` is reserved for rendering without calling a component method. Normal PHP
 methods, including lifecycle methods, are not exposed unless explicitly marked.
@@ -187,6 +208,20 @@ Initial query-state restoration validates and applies values without calling
 `updated()`, preserving a bookmarked search/page combination.
 Hooks must not write records or send external messages. `validate()` can return additional
 field errors. The component's `errors()`/template `$errors` expose validation errors.
+
+`validate()` runs before every action and, by default, on plain updates too. Return
+`false` from `validatesOnUpdate()` to check only before actions, so a half-filled
+form shows no errors and a costly check (a database lookup) does not run while typing.
+Field rules from `#[State(rules: ...)]` always apply. Mark Cancel, Discard or Reset
+actions `#[Action(validate: false)]`: they run even while the form has errors
+(a value rejected by its field rule is still not applied).
+
+```php
+public function validatesOnUpdate(): bool { return false; }
+
+#[Action(validate: false)]
+public function discard(): void { $this->name = ''; }
+```
 
 `State::rules` uses Core Validator rules (`required`, `string`, `integer`, `numeric`,
 `min`, `max`, `in`). Invalid updates do not run an action and return a rendered 422.
@@ -249,6 +284,15 @@ For financial/external side effects, implement application-level idempotency.
 
 - Snapshots are HMAC-signed, tied to the session CSRF token, and expire after 30
   minutes by default (`Config::set('reactive.ttl', 1800)`). Signatures do not encrypt.
+- Long sessions (0.5+): while a page stays open, the browser re-signs each component's
+  snapshot once half the TTL has passed (`_action=$renew`). Renewal re-checks CSRF,
+  the session, the admin context and `authorize()`, re-signs the unchanged state and
+  renders nothing. An editor can keep a form open for hours without losing the draft;
+  the session itself (login, CSRF token) still ends as configured, and then the
+  component shows the "session ended" or "expired" message.
+- A signed snapshot can be replayed until it expires. That is safe because every
+  update re-checks permissions and actions re-check records, but do not rely on
+  snapshot expiry for anything else.
 - Signing uses `APP_KEY`, or an explicit `reactive.key`, with at least 32 bytes.
 - State/property allowlists, action allowlists, and typed input are enforced server-side.
 - Core CSRF runs before the endpoint, and Kernel repeats the check for custom mounts.
@@ -269,6 +313,13 @@ template content as usual; rich HTML still needs application sanitization.
 
 The bundle starts Alpine only when `window.Alpine` is absent. Load an application's
 Alpine before the Reactive bundle if it already owns Alpine initialization.
+
+Messages the runtime shows itself (session ended, expired, no permission, failed
+update) follow the page language: the package ships English, Arabic and Kurdish
+(Sorani), with English for other languages. A site overrides any line in its own
+lang files with the key `reactive.<name>`, for example
+`'reactive.expired' => 'Please reload the page.'`. Names: `session`, `forbidden`,
+`missing`, `changed`, `expired`, `failed`, `invalid`.
 
 Browser events: `flo-reactive:initialized`, `flo-reactive:before-update`,
 `flo-reactive:updated`, `flo-reactive:error`, and `flo-reactive:destroyed`.

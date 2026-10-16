@@ -10,7 +10,7 @@ for ($index = 0; $index < $zip->numFiles; $index++) {
         throw new RuntimeException('Development artifact included in archive: ' . $name);
     }
 }
-foreach (['src/Kernel.php', 'dist/manifest.json', 'LICENSE', 'THIRD_PARTY_NOTICES.md'] as $required) {
+foreach (['src/Kernel.php', 'src/Messages.php', 'resources/lang/en.php', 'resources/lang/ar.php', 'resources/lang/ku.php', 'dist/manifest.json', 'LICENSE', 'THIRD_PARTY_NOTICES.md'] as $required) {
     if ($zip->locateName($required) === false) { throw new RuntimeException('Missing package file: ' . $required); }
 }
 $manifest = json_decode((string) $zip->getFromName('dist/manifest.json'), true, 16, JSON_THROW_ON_ERROR);
