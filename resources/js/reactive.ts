@@ -294,7 +294,12 @@ document.addEventListener('htmx:beforeSwap', ((event: CustomEvent) => {
   loading(state, false);
   Alpine.morph(state.root, next.outerHTML, {
     key: (element: HTMLElement) => element.id,
-    updating: (element: HTMLElement, replacement: HTMLElement) => {
+    updating: (element: HTMLElement, replacement: HTMLElement, _childrenOnly: () => void, skip: () => void) => {
+      // A widget that owns its DOM (a rich text editor, a map) marks its root
+      // data-rx-ignore="key": morph leaves it untouched while the key matches,
+      // and replaces it (for the widget to start again) when the key changes.
+      if (element instanceof HTMLElement && replacement instanceof HTMLElement && element.dataset.rxIgnore !== undefined
+        && element.dataset.rxIgnore === replacement.dataset.rxIgnore) { skip(); return; }
       // The native open attribute belongs to the dialog lifecycle, not morph.
       if (element instanceof HTMLDialogElement && element.open) replacement.setAttribute('open', '');
     },

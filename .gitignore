@@ -8,3 +8,4 @@
 /.ci/
 /composer.local.json
 /composer.local.lock
+/.phpunit.result.cache

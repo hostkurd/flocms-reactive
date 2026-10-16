@@ -139,3 +139,18 @@ test('clicking Send straight from a lazy field queues Send once behind that fiel
   await expect(form).toHaveAttribute('aria-busy', 'false');
   expect(sends).toEqual(['refresh', 'send']);
 });
+
+test('data-rx-ignore keeps widget DOM across updates until its key changes', async ({ page }) => {
+  await page.goto('/en/demo/contact');
+  const form = page.locator('#rx-contact');
+  await page.locator('[data-widget]').evaluate(element => { const mark = document.createElement('span'); mark.dataset.mark = ''; mark.textContent = 'Added by a widget'; element.append(mark); });
+  await page.getByLabel('Name').fill('Sara');
+  await expect(form.locator('[data-server-name]')).toHaveText('Sara');
+  await expect(page.locator('[data-widget] [data-mark]')).toHaveText('Added by a widget');
+  await page.getByLabel('Email').fill('sara@example.test');
+  await page.getByLabel('Message').fill('Hello');
+  await page.getByRole('button', { name: 'Send' }).click();
+  await expect(form.locator('[data-sent]')).toBeVisible();
+  await expect(page.locator('[data-widget]')).toHaveAttribute('data-rx-ignore', 'sent');
+  await expect(page.locator('[data-widget] [data-mark]')).toHaveCount(0);
+});

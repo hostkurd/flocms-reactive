@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.5.1 - 2026-10-16
+
+- **`data-rx-ignore="key"`** keeps a widget's own DOM (a rich text editor, a map) across
+  updates while the key stays the same; when the server renders another key, the element
+  is replaced. Needed by flocms-admin 0.10's rich text editor. No other changes.
+- Release-version assets `reactive-v0.5.1.js` and `reactive-v0.5.1.css`.
+
 ## 0.5.0 - 2026-10-16
 
 No breaking changes: existing components behave as in 0.4.

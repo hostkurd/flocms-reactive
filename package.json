@@ -1,6 +1,6 @@
 {
   "name": "@hostkurd/flocms-reactive",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "Build assets for the optional FloCMS reactive PHP component package",
   "scripts": {
     "build": "vite build",
