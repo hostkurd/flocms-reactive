@@ -20,6 +20,8 @@ No breaking changes: existing components behave as in 0.4.
 - **No lost clicks.** Buttons lock only while an action runs. A click during a plain
   update (for example leaving a lazy field by clicking Save) is queued and sent once
   after it, with the latest values. A second click while it waits is ignored.
+- **`data-rx-ignore="key"`** keeps a widget's own DOM (a rich text editor) across
+  updates while the key stays the same; a new key replaces it.
 - Contact-form example for the binding modes; new PHP and browser tests.
 - Release-version assets `reactive-v0.5.0.js` and `reactive-v0.5.0.css`.
 

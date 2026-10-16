@@ -168,6 +168,9 @@ language, including applications installed below a subdirectory.
 - `data-rx-dialog-trigger`: remember the triggering action button for focus return.
 - `data-rx-dialog-close`: cancel locally and request the server discard action.
 - `data-rx-focus-fallback`: focus target when a dialog's opener has disappeared.
+- `data-rx-ignore="key"` (0.5+): updates leave this element and its contents alone while
+  the key stays the same, so a widget that builds its own DOM (a rich text editor, a map)
+  survives. When the server renders another key (another record), it is replaced.
 
 ### When a bound control is sent (0.5+)
 
