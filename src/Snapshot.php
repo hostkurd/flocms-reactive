@@ -13,6 +13,9 @@ final class Snapshot
         }
     }
 
+    /** Seconds a signed snapshot stays valid. */
+    public function ttl(): int { return $this->ttl; }
+
     public function sign(array $data, string $sessionToken, ?int $now = null): string
     {
         $data['issued'] = $now ?? time();

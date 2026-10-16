@@ -8,6 +8,7 @@ require $package . '/vendor/autoload.php';
 require __DIR__ . '/ProductTable.php';
 require dirname(__DIR__) . '/forms/LocationForm.php';
 require dirname(__DIR__) . '/forms/LargeDraft.php';
+require dirname(__DIR__) . '/forms/ContactForm.php';
 
 use FloCMS\Core\{App, Config, Csrf, Database, HttpException, Session};
 use FloCMS\Core\Http\Response;
@@ -44,6 +45,7 @@ if (!Session::get('demo_initialized')) {
 Reactive::register('products', \FloCMS\Reactive\Examples\ProductTable::class);
 Reactive::register('location', \FloCMS\Reactive\Examples\LocationForm::class);
 Reactive::register('large-draft', \FloCMS\Reactive\Examples\LargeDraft::class);
+Reactive::register('contact', \FloCMS\Reactive\Examples\ContactForm::class);
 // A private temporary file per demo session makes saves survive HTTP requests.
 // Real applications use their configured database, migrations, and real login.
 $storage = sys_get_temp_dir() . '/flocms-reactive-demo-v0.3';
@@ -87,6 +89,14 @@ final class DemoController extends \FloCMS\Core\Controller
     public function large(): Response
     {
         return Response::html('<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Large draft</title>' . Reactive::assets() . '</head><body>' . Reactive::mount('large-draft', 'large') . '</body></html>')->header('Cache-Control', 'no-store');
+    }
+    public function contact(): Response
+    {
+        $language = App::getRouter()->getLanguage();
+        $dir = in_array($language, ['ku', 'ar'], true) ? 'rtl' : 'ltr';
+        return Response::html('<!doctype html><html lang="' . $language . '" dir="' . $dir . '"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width">'
+            . '<title>FloCMS Reactive — Binding modes</title>' . Reactive::assets() . '<link rel="stylesheet" href="/demo/style"></head><body>'
+            . '<h1>Binding modes</h1>' . Reactive::mount('contact', 'contact') . '</body></html>')->header('Cache-Control', 'no-store');
     }
     public function style(): Response
     {

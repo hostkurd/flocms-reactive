@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.5.0 - 2026-10-16
+
+No breaking changes: existing components behave as in 0.4.
+
+- **Binding modes.** `data-rx-model="lazy"` (send on change), `"blur"` (send when
+  an edited control loses focus), `"defer"` (send with the next request) and
+  `"debounce:600"` (live with another delay). The default stays live after 300 ms.
+  Values typed while another update runs are kept as typed when it returns.
+- **Validation where it belongs.** `validatesOnUpdate(): false` runs `validate()` only
+  before actions; `#[Action(validate: false)]` runs Cancel/Discard/Reset actions even
+  while the form has errors. Default: `validate()` still runs on every update.
+- **Long sessions stay alive.** The browser re-signs snapshots in the background once
+  half the TTL has passed (`$renew`, no rendering), so a form left open for more than
+  30 minutes no longer fails with "expired". Login and CSRF expiry are unchanged.
+- **Translated runtime messages.** Session, permission, expiry and failure messages
+  come from PHP in the page language (`data-rx-messages`): English, Arabic and
+  Kurdish included, overridable per site with `reactive.<name>` lang keys.
+- **No lost clicks.** Buttons lock only while an action runs. A click during a plain
+  update (for example leaving a lazy field by clicking Save) is queued and sent once
+  after it, with the latest values. A second click while it waits is ignored.
+- Contact-form example for the binding modes; new PHP and browser tests.
+- Release-version assets `reactive-v0.5.0.js` and `reactive-v0.5.0.css`.
+
 ## 0.4.1 - 2026-10-16
 
 - Documentation only. The 0.4.0 entry now carries its release date, the README

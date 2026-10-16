@@ -24,6 +24,13 @@ abstract class Component
     /** Non-field checks after state restoration; field => translated message. */
     public function validate(): array { return []; }
 
+    /**
+     * Whether validate() also runs on plain updates (typing, selecting), not
+     * only before actions. Return false when validate() is costly or should
+     * not show errors while a form is still being filled in.
+     */
+    public function validatesOnUpdate(): bool { return true; }
+
     final public function errors(): array { return $this->errors; }
     final public function setErrors(array $errors): void { $this->errors = $errors; }
 

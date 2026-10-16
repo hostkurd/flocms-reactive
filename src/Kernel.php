@@ -8,6 +8,9 @@ use FloCMS\Reactive\Attributes\Action;
 
 final class Kernel
 {
+    /** Reserved action name for snapshot renewal; never a PHP method name. */
+    public const RENEW = '$renew';
+
     public function __construct(private readonly Registry $registry, private readonly Snapshot $signer, private readonly string $endpoint)
     {
         // Core 2.3.2 defines ValidationException in Validator.php. Load that
@@ -63,20 +66,33 @@ final class Kernel
         $component->authorize($request);
         $updates = $request->input('state', []);
         if (!is_array($updates)) { throw new HttpException(400); }
-        $errors = $schema->apply($updates);
-        $component->authorize($request);
-        if ($errors === []) { $errors = $component->validate(); }
-        $component->setErrors($errors);
         $action = $request->input('_action', 'refresh');
         if (!is_string($action)) { throw new HttpException(400); }
+        if ($action === self::RENEW) {
+            // Keep-alive: re-sign the unchanged state so a long editing session
+            // does not expire. No client updates, no actions, no rendering.
+            $context = $data;
+            $context['state'] = $schema->values();
+            unset($context['issued'], $context['session']);
+            return Response::json(['snapshot' => $this->signer->sign($context, Csrf::token())])->header('Cache-Control', 'no-store');
+        }
+        $errors = $schema->apply($updates);
+        $component->authorize($request);
+        $config = null;
         if ($action !== 'refresh') {
             if (!method_exists($component, $action)) { throw new HttpException(404); }
             $method = new \ReflectionMethod($component, $action);
             $attributes = $method->getAttributes(Action::class);
             if ($attributes === [] || !$method->isPublic() || $method->isStatic() || $method->getNumberOfParameters() !== 0 || $method->isConstructor()) { throw new HttpException(404); }
-            $permission = $attributes[0]->newInstance()->permission;
-            if ($permission !== null) { Auth::authorize($permission); }
-            if ($errors === []) {
+            $config = $attributes[0]->newInstance();
+        }
+        // Field rules always apply. validate() runs before validating actions and,
+        // unless the component opts out, on plain updates too.
+        if ($errors === [] && ($config === null ? $component->validatesOnUpdate() : $config->validate)) { $errors = $component->validate(); }
+        $component->setErrors($errors);
+        if ($config !== null) {
+            if ($config->permission !== null) { Auth::authorize($config->permission); }
+            if ($errors === [] || !$config->validate) {
                 try { $method->invoke($component); }
                 catch (ValidationException $error) {
                     foreach ($error->getErrors() as $field => $messages) {
@@ -107,7 +123,9 @@ final class Kernel
             'data-rx-snapshot' => $snapshot, 'data-rx-endpoint' => $this->endpoint,
             'data-rx-state' => json_encode($schema->values(true), JSON_THROW_ON_ERROR),
             'data-rx-refresh' => json_encode($component->refreshTargets(), JSON_THROW_ON_ERROR),
-            'data-rx-token' => Csrf::token(), 'data-rx-url' => $schema->url($context['path'], $context['key'], $query)];
+            'data-rx-token' => Csrf::token(), 'data-rx-url' => $schema->url($context['path'], $context['key'], $query),
+            'data-rx-ttl' => (string) $this->signer->ttl(),
+            'data-rx-messages' => json_encode(Messages::all($context['language']), JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR)];
         $html = '<section';
         foreach ($attributes as $name => $value) { $html .= ' ' . $name . '="' . htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '"'; }
         return $html . '>' . $body . '<p class="rx-status" role="status" aria-live="polite" data-rx-status></p></section>';
